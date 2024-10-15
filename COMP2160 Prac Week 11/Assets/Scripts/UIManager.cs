@@ -15,32 +15,32 @@ using UnityEngine.InputSystem;
 [DefaultExecutionOrder(-100)]
 public class UIManager : MonoBehaviour
 {
-#region UI Elements
+    #region UI Elements
     [SerializeField] private Transform crosshair;
     [SerializeField] private Transform target;
-#endregion 
+    #endregion
 
-#region Singleton
+    #region Singleton
     static private UIManager instance;
     static public UIManager Instance
     {
         get { return instance; }
     }
-#endregion 
+    #endregion
 
-#region Actions
+    #region Actions
     private Actions actions;
     private InputAction mouseAction;
     private InputAction deltaAction;
     private InputAction selectAction;
-#endregion
+    #endregion
 
-#region Events
+    #region Events
     public delegate void TargetSelectedEventHandler(Vector3 worldPosition);
     public event TargetSelectedEventHandler TargetSelected;
-#endregion
+    #endregion
 
-#region Init & Destroy
+    #region Init & Destroy
     void Awake()
     {
         if (instance != null)
@@ -68,21 +68,40 @@ public class UIManager : MonoBehaviour
     {
         actions.mouse.Disable();
     }
-#endregion Init
+    #endregion Init
 
-#region Update
+    #region Update
     void Update()
     {
         MoveCrosshair();
         SelectTarget();
     }
 
-    private void MoveCrosshair() 
+    private void MoveCrosshair()
     {
         Vector2 mousePos = mouseAction.ReadValue<Vector2>();
 
-        // FIXME: Move the crosshair position to the mouse position (in world coordinates)
-        // crosshair.position = ...;
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+
+        if (Camera.main.orthographic)
+        {
+            Vector3 screenPosition = new Vector3(mousePos.x, mousePos.y, Camera.main.nearClipPlane);
+
+            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+
+            crosshair.position = worldPosition;
+        }
+        else
+        {
+            Plane plane = new Plane(Vector3.up, Vector3.zero);
+            float distance;
+
+            if (plane.Raycast(ray, out distance))
+            {
+                Vector3 worldPosition = ray.GetPoint(distance);
+                crosshair.position = worldPosition;
+            }
+        }
     }
 
     private void SelectTarget()
@@ -91,11 +110,11 @@ public class UIManager : MonoBehaviour
         {
             // set the target position and invoke 
             target.gameObject.SetActive(true);
-            target.position = crosshair.position;     
-            TargetSelected?.Invoke(target.position);       
+            target.position = crosshair.position;
+            TargetSelected?.Invoke(target.position);
         }
     }
 
-#endregion Update
+    #endregion Update
 
 }
