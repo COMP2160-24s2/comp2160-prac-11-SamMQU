@@ -80,27 +80,20 @@ public class UIManager : MonoBehaviour
     private void MoveCrosshair()
     {
         Vector2 mousePos = mouseAction.ReadValue<Vector2>();
+        Vector2 delta = deltaAction.ReadValue<Vector2>();
+        // Vector2 screenPos = Camera.WorldToScreenPoint(crosshair.position);
+        // screenPos+=delta;
+
 
         Ray ray = Camera.main.ScreenPointToRay(mousePos);
 
-        if (Camera.main.orthographic)
+        Plane plane = new Plane(Vector3.up, Vector3.zero);
+        float distance;
+
+        if (plane.Raycast(ray, out distance))
         {
-            Vector3 screenPosition = new Vector3(mousePos.x, mousePos.y, Camera.main.nearClipPlane);
-
-            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
-
+            Vector3 worldPosition = ray.GetPoint(distance);
             crosshair.position = worldPosition;
-        }
-        else
-        {
-            Plane plane = new Plane(Vector3.up, Vector3.zero);
-            float distance;
-
-            if (plane.Raycast(ray, out distance))
-            {
-                Vector3 worldPosition = ray.GetPoint(distance);
-                crosshair.position = worldPosition;
-            }
         }
     }
 
